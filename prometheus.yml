@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:80']
+    metrics_path: '/metrics'
+
+  - job_name: 'marketdataservice'
+    static_configs:
+      - targets: ['marketdataservice:80']
+    metrics_path: '/metrics'
+
+  - job_name: 'arbitragecalculatorservice'
+    static_configs:
+      - targets: ['arbitragecalculatorservice:80']
+    metrics_path: '/metrics'
+
+  - job_name: 'datastorageservice'
+    static_configs:
+      - targets: ['datastorageservice:80']
+    metrics_path: '/metrics'
+
+  - job_name: 'schedulerservice'
+    static_configs:
+      - targets: ['schedulerservice:80']
+    metrics_path: '/metrics'

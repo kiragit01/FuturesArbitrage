@@ -1,0 +1,18 @@
+﻿FROM mcr.microsoft.com/dotnet/sdk:9.0
+WORKDIR /app
+
+# Copy all project files
+COPY . .
+
+# Restore dependencies for each project
+RUN dotnet restore "tests/MarketDataService.Tests/MarketDataService.Tests.csproj"
+RUN dotnet restore "tests/ArbitrageCalculatorService.Tests/ArbitrageCalculatorService.Tests.csproj"
+RUN dotnet restore "tests/DataStorageService.Tests/DataStorageService.Tests.csproj"
+RUN dotnet restore "tests/SchedulerService.Tests/SchedulerService.Tests.csproj"
+
+# Run tests sequentially
+ENTRYPOINT ["sh", "-c", \
+    "dotnet test tests/MarketDataService.Tests/MarketDataService.Tests.csproj --no-restore --configuration Release && \
+    dotnet test tests/ArbitrageCalculatorService.Tests/ArbitrageCalculatorService.Tests.csproj --no-restore --configuration Release && \
+    dotnet test tests/DataStorageService.Tests/DataStorageService.Tests.csproj --no-restore --configuration Release && \
+    dotnet test tests/SchedulerService.Tests/SchedulerService.Tests.csproj --no-restore --configuration Release"]

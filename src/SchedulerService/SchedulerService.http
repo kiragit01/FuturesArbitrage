@@ -1,0 +1,6 @@
+@SchedulerService_HostAddress = http://localhost:80
+
+GET {{SchedulerService_HostAddress}}/health/
+Accept: application/json
+
+###

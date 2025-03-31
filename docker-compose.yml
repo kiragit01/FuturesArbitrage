@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=arbitrage
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./src/ApiGateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "5000:80"
+    depends_on:
+      - marketdataservice
+      - arbitragecalculatorservice
+      - datastorageservice
+      - schedulerservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - data-protection-keys:/home/app/.aspnet/DataProtection-Keys
+
+  marketdataservice:
+    build:
+      context: ./src/MarketDataService
+      dockerfile: Dockerfile
+    container_name: marketdataservice
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  arbitragecalculatorservice:
+    build:
+      context: ./src/ArbitrageCalculatorService
+      dockerfile: Dockerfile
+    container_name: arbitragecalculatorservice
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__MarketDataService=http://marketdataservice:80
+    depends_on:
+      - marketdataservice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  datastorageservice:
+    build:
+      context: ./src/DataStorageService
+      dockerfile: Dockerfile
+    container_name: datastorageservice
+    ports:
+      - "5003:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=arbitrage;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  schedulerservice:
+    build:
+      context: ./src/SchedulerService
+      dockerfile: Dockerfile
+    container_name: schedulerservice
+    ports:
+      - "5004:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__MarketDataService=http://marketdataservice:80
+      - ServiceUrls__ArbitrageCalculatorService=http://arbitragecalculatorservice:80
+      - ServiceUrls__DataStorageService=http://datastorageservice:80
+    depends_on:
+      - marketdataservice
+      - arbitragecalculatorservice
+      - datastorageservice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+volumes:
+  data-protection-keys:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

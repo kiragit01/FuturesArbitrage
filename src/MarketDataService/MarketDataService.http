@@ -1,0 +1,9 @@
+@MarketDataService_HostAddress = http://localhost:5110
+
+GET {{MarketDataService_HostAddress}}/api/marketdata/futures/BTCUSDT/1h
+Accept: application/json
+
+###
+
+GET {{MarketDataService_HostAddress}}/api/marketdata/available-futures
+Accept: application/json
