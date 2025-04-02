@@ -39,8 +39,8 @@
 1. Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/yourusername/futures-arbitrage.git
-cd futures-arbitrage
+git clone https://github.com/kiragit01/FuturesArbitrage.git
+cd FuturesArbitrage
 ```
 
 2. Сборка и запуск сервисов с помощью Docker Compose:
