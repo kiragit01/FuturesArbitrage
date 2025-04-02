@@ -109,16 +109,6 @@ API Gateway является единой точкой входа в экоси�
 }
 ```
 
-### Настройки API биржи
-
-```json
-"ExchangeSettings": {
-  "BaseUrl": "https://api.binance.com",
-  "ApiKey": "<your-api-key>",
-  "ApiSecret": "<your-api-secret>"
-}
-```
-
 ### Настройки планировщика
 
 ```json
